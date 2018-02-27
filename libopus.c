@@ -33,34 +33,60 @@
 
 #define OPUS_BUILD            1
 
-#if defined(_M_IX86) || defined(_M_X64)
+#if HAVE_X86
 /* Can always compile SSE intrinsics (no special compiler flags necessary) */
 #define OPUS_X86_MAY_HAVE_SSE
 #define OPUS_X86_MAY_HAVE_SSE2
 #define OPUS_X86_MAY_HAVE_SSE4_1
 
-/* Presume SSE functions, if compiled to use SSE/SSE2/AVX (note that AMD64 implies SSE2, and AVX
-implies SSE4.1) */
-#if defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP >= 1)) || defined(__AVX__)
+/* Presume SSE functions, if compiled to use SSE/SSE2/AVX (note that AMD64 implies SSE2, and AVX implies SSE4.1) */
 #define OPUS_X86_PRESUME_SSE 1
-#endif
-#if defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP >= 2)) || defined(__AVX__)
 #define OPUS_X86_PRESUME_SSE2 1
-#endif
-#if defined(__AVX__)
-#define OPUS_X86_PRESUME_SSE4_1 1
-#endif
+//#if defined(__AVX__)
+//#define OPUS_X86_PRESUME_SSE4_1 1
+//#endif
 
 #if !defined(OPUS_X86_PRESUME_SSE4_1) || !defined(OPUS_X86_PRESUME_SSE2) || !defined(OPUS_X86_PRESUME_SSE)
 #define OPUS_HAVE_RTCD 1
 #endif
 
-#endif
+#endif /* HAVE_X86 */
 
 
 #define CELT_DECODER_C
 #define CELT_ENCODER_C
 #define ANALYSIS_C
+
+
+#ifdef COMPILE_SSE41_ONLY
+
+#if HAVE_X86
+#if !defined(__SSE4_1__) && !defined(__AVX__)
+#error libopus_sse4_1.c has to be compiled with sse4.1 enabled
+#endif
+#include "../silk/x86/NSQ_sse4_1.c"
+#define NSQ_del_dec_struct NSQ_del_dec_struct_NSQ_del_dec_sse4_1
+#define NSQ_sample_struct NSQ_sample_struct_NSQ_del_dec_sse4_1
+#define NSQ_sample_pair NSQ_sample_pair_NSQ_del_dec_sse4_1
+#include "../silk/x86/NSQ_del_dec_sse4_1.c"
+#define tiltWeights tiltWeights_VAD_sse4_1
+#include "../silk/x86/VAD_sse4_1.c"
+#include "../silk/x86/VQ_WMat_EC_sse4_1.c"
+
+#ifdef FIXED_POINT
+#include "../silk/fixed/x86/vector_ops_FIX_sse4_1.c"
+#include "../silk/fixed/x86/burg_modified_FIX_sse4_1.c"
+#endif
+
+#undef PI
+
+// CELT:
+
+#include "../celt/x86/celt_lpc_sse4_1.c"
+#include "../celt/x86/pitch_sse4_1.c"
+#endif /* HAVE_X86 */
+
+#else
 
 // SILK:
 
@@ -145,15 +171,7 @@ implies SSE4.1) */
 #include "../silk/LPC_fit.c"
 
 #if HAVE_X86
-#include "../silk/x86/NSQ_sse4_1.c"
-#define NSQ_del_dec_struct NSQ_del_dec_struct_NSQ_del_dec_sse4_1
-#define NSQ_sample_struct NSQ_sample_struct_NSQ_del_dec_sse4_1
-#define NSQ_sample_pair NSQ_sample_pair_NSQ_del_dec_sse4_1
-#include "../silk/x86/NSQ_del_dec_sse4_1.c"
 #include "../silk/x86/x86_silk_map.c"
-#define tiltWeights tiltWeights_VAD_sse4_1
-#include "../silk/x86/VAD_sse4_1.c"
-#include "../silk/x86/VQ_WMat_EC_sse4_1.c"
 #endif
 
 #if HAVE_ARM
@@ -194,12 +212,6 @@ implies SSE4.1) */
 #include "../silk/fixed/vector_ops_FIX.c"
 #include "../silk/fixed/schur64_FIX.c"
 #include "../silk/fixed/schur_FIX.c"
-
-#if HAVE_X86
-#include "../silk/fixed/x86/vector_ops_FIX_sse4_1.c"
-#include "../silk/fixed/x86/burg_modified_FIX_sse4_1.c"
-#undef QA
-#endif
 
 #if HAVE_ARM
 #include "../silk/fixed/arm/warped_autocorrelation_FIX_neon_intr.c"
@@ -267,9 +279,6 @@ implies SSE4.1) */
 
 #include "../celt/x86/pitch_sse2.c"
 #include "../celt/x86/vq_sse2.c"
-
-#include "../celt/x86/celt_lpc_sse4_1.c"
-#include "../celt/x86/pitch_sse4_1.c"
 #endif
 
 #if HAVE_ARM
@@ -280,7 +289,7 @@ implies SSE4.1) */
 // #include "../celt/arm/armopts.s.in"
 
 #include "../celt/arm/celt_neon_intr.c"
-#include "../celt/arm/pitch_neon_intr.c
+#include "../celt/arm/pitch_neon_intr.c"
 
 #include "../celt/arm/celt_fft_ne10.c"
 #include "../celt/arm/celt_mdct_ne10.c"
@@ -302,3 +311,5 @@ implies SSE4.1) */
 #include "../src/analysis.c"
 #include "../src/mlp.c"
 #include "../src/mlp_data.c"
+
+#endif /* COMPILE_SSE41_ONLY */
