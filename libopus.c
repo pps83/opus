@@ -55,6 +55,9 @@
 #endif /* HAVE_X86 */
 
 #if HAVE_ARM
+
+// #define HAVE_ARM_NE10 1
+
 #define OPUS_ARM_ASM
 #define OPUS_ARM_MAY_HAVE_NEON
 #define OPUS_ARM_MAY_HAVE_NEON_INTR
@@ -308,8 +311,10 @@
 #include "../celt/arm/celt_neon_intr.c"
 #include "../celt/arm/pitch_neon_intr.c"
 
+#ifdef HAVE_ARM_NE10
 #include "../celt/arm/celt_fft_ne10.c"
 #include "../celt/arm/celt_mdct_ne10.c"
+#endif
 #endif
 
 // OPUS:
