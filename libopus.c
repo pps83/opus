@@ -25,6 +25,8 @@
 #pragma warning(disable: 4244) // conversion from 'int' to 'opus_int16', possible loss of data
 #endif
 
+#define HAVE_LRINTF
+
 #define PACKAGE_VERSION "1.2.1-55-g840ccc94"
 #define USE_ALLOCA            1
 
